@@ -1,0 +1,26 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main  # Cambia "main" por tu rama principal si es diferente
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: 35.173.247.55            # Reemplaza con la IP de tu instancia EC2
+        username: ec2-user              # Cambia si usas otro usuario en EC2
+        key: ${{ secrets.EC2_SSH_KEY }} # Clave SSH almacenada como secreto
+        script: |
+          cd /var/www/helloworld        # Ruta donde está tu proyecto
+          git pull origin main          # Obtén los últimos cambios
+          npm install                   # Instala dependencias
+          pm2 restart app.js            # Reinicia la aplicación con PM2
