@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # Cambia "main" por tu rama principal si es diferente
+      - main  # Cambia "main" si tu rama principal tiene otro nombre
 
 jobs:
   deploy:
@@ -14,13 +14,12 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/ssh-action@master
       with:
-        host: 35.173.247.55            # Reemplaza con la IP de tu instancia EC2
-        username: ec2-user              # Cambia si usas otro usuario en EC2
-        key: ${{ secrets.EC2_SSH_KEY }} # Clave SSH almacenada como secreto
+        host: ${{ secrets.HOST }}                  # IP pública o DNS de tu instancia EC2
+        username: ${{ secrets.EC2_USER }}          # Usuario de tu servidor EC2 (generalmente "ubuntu" o "ec2-user")
+        key: ${{ secrets.EC2_SSH_KEY }}            # Clave SSH privada configurada como secreto en GitHub
         script: |
-          cd /var/www/helloworld        # Ruta donde está tu proyecto
-          git pull origin main          # Obtén los últimos cambios
-          npm install                   # Instala dependencias
-          pm2 restart app.js            # Reinicia la aplicación con PM2
+          cd /var/www/helloworld                  # Ruta de tu proyecto
+          git pull origin main                    # Obtén los últimos cambios
+          npm install                             # Instala las dependencias
