@@ -23,3 +23,4 @@ jobs:
           cd /var/www/helloworld                  # Ruta de tu proyecto
           git pull origin main                    # Obtén los últimos cambios
           npm install                             # Instala las dependencias
+          echo "Conectándose a la instancia de EC2..."
