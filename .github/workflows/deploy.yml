@@ -21,7 +21,7 @@ jobs:
     - name: Deploy to EC2
       run: |
         echo "Conectándose a la instancia de EC2..."
-        ssh -o StrictHostKeyChecking=no ubuntu@3.80.210.76 << 'EOF'
+        ssh -o StrictHostKeyChecking=no ubuntu@44.203.127.237 << 'EOF'
           echo "Actualizando el servidor..."
           pkill node || true  # Detiene cualquier proceso Node.js si está corriendo
           cd ~/aws-action   # Asegúrate de que este sea el directorio correcto de tu proyecto
