@@ -3,44 +3,30 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main
+      - main  # Cambia "main" si tu rama principal tiene otro nombre
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out the code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Deploy to EC2
-      uses: easingthemes/ssh-deploy@main
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-        REMOTE_HOST: ${{ secrets.HOST}}
-        REMOTE_USER: ${{ secrets.EC2_USER }}
-
-    - name: Executing remote SSH commands using SSH key
-      uses: appleboy/ssh-action@master
+    - name: Configure SSH
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          echo "Configurando permisos..."
-          sudo chown -R $USER:$USER /var/www/helloworld
-          sudo chmod -R 775 /var/www/helloworld
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-          echo "Configurando git..."
-          git config --global --add safe.directory /var/www/helloworld
-
-          echo "Actualizando el código..."
-          cd /var/www/helloworld
-          git pull origin main
-
-          echo "Instalando dependencias..."
-          npm install
-
-
-          echo "Despliegue completado con éxito."
-
+    - name: Deploy to EC2
+      run: |
+        echo "Conectándose a la instancia de EC2..."
+        ssh -o StrictHostKeyChecking=no ubuntu@54.89.240.170 << 'EOF'
+          echo "Actualizando el servidor..."
+          pkill node || true  # Detiene cualquier proceso Node.js si está corriendo
+          cd ~/aws-action   # Asegúrate de que este sea el directorio correcto de tu proyecto
+          git pull origin main  # Descarga los últimos cambios de tu repositorio
+          npm install  # Instala dependencias
+          nohup node server.js > output.log 2>&1 &  # Inicia la aplicación en segundo plano
+          echo "Servidor reiniciado correctamente."
+        EOF
