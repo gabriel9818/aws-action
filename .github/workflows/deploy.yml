@@ -3,37 +3,51 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # Cambia "main" si tu rama principal tiene otro nombre
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Check out the code
       uses: actions/checkout@v3
 
     - name: Deploy to EC2
+      uses: easingthemes/ssh-deploy@main
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        REMOTE_HOST: ${{ secrets.HOST_DNS }}
+        REMOTE_USER: ${{ secrets.EC2_USER }}
+        TARGET: ${{ secrets.TARGET_DIR }}
+
+    - name: Executing remote SSH commands using SSH key
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.HOST }}                  # IP pública o DNS de tu instancia EC2
-        username: ${{ secrets.EC2_USER }}          # Usuario de tu servidor EC2 (generalmente "ubuntu" o "ec2-user")
-        key: ${{ secrets.EC2_SSH_KEY }}            # Clave SSH privada configurada como secreto en GitHub
+        host: ${{ secrets.HOST_DNS }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          echo "Conectándose a la instancia de EC2..."
-          cd /var/www/helloworld                  # Ruta de tu proyecto
-          git pull origin main                    # Obtén los últimos cambios
-          npm install                             # Instala las dependencias
-          npm run build                           # Si tu proyecto tiene un paso de construcción, asegúrate de ejecutarlo
-          echo "Desplegando la aplicación..."
-          
-          # Reiniciar la aplicación con PM2 si se usa PM2 para gestión
-          pm2 delete my-app || echo "No existing process found"   # Detiene el proceso si existe
-          pm2 start npm --name "my-app" -- run dev  # Arranca el servidor de Node.js
-          pm2 save                                # Guarda el estado de PM2 para que persista después de reiniciar el servidor
+          echo "Configurando permisos..."
+          sudo chown -R $USER:$USER /var/www/helloworld
+          sudo chmod -R 775 /var/www/helloworld
 
-    - name: Verify deployment
-      run: |
-        echo "Verificando si la aplicación está corriendo..."
-        ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.HOST }} "pm2 list"
+          echo "Configurando git..."
+          git config --global --add safe.directory /var/www/helloworld
 
+          echo "Actualizando el código..."
+          cd /var/www/helloworld
+          git pull origin main
+
+          echo "Instalando dependencias..."
+          npm install
+
+          echo "Instalando PM2 si es necesario..."
+          sudo npm install -g pm2 || echo "PM2 ya está instalado"
+
+          echo "Reiniciando la aplicación con PM2..."
+          pm2 delete helloworld || echo "No existing process found"
+          pm2 start npm --name "helloworld" -- run start  # Cambia "start" si tienes otro script
+          pm2 save
+
+          echo "Despliegue completado con éxito."
