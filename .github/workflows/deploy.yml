@@ -46,7 +46,7 @@ jobs:
 
           echo "Reiniciando la aplicación con PM2..."
           pm2 delete helloworld || echo "No existing process found"
-          pm2 start npm --name "helloworld" -- run start  # Cambia "start" si tienes otro script
+          pm2 start npm --name "aws-action" -- run start  # Cambia "start" si tienes otro script
           pm2 save
 
           echo "Despliegue completado con éxito."
