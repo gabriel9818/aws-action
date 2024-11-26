@@ -20,8 +20,20 @@ jobs:
         username: ${{ secrets.EC2_USER }}          # Usuario de tu servidor EC2 (generalmente "ubuntu" o "ec2-user")
         key: ${{ secrets.EC2_SSH_KEY }}            # Clave SSH privada configurada como secreto en GitHub
         script: |
+          echo "Conectándose a la instancia de EC2..."
           cd /var/www/helloworld                  # Ruta de tu proyecto
           git pull origin main                    # Obtén los últimos cambios
           npm install                             # Instala las dependencias
-          echo "Conectándose a la instancia de EC2..."
-          echo "Conectándose a la instancia de EC2..."
+          npm run build                           # Si tu proyecto tiene un paso de construcción, asegúrate de ejecutarlo
+          echo "Desplegando la aplicación..."
+          
+          # Reiniciar la aplicación con PM2 si se usa PM2 para gestión
+          pm2 delete my-app || echo "No existing process found"   # Detiene el proceso si existe
+          pm2 start npm --name "my-app" -- run dev  # Arranca el servidor de Node.js
+          pm2 save                                # Guarda el estado de PM2 para que persista después de reiniciar el servidor
+
+    - name: Verify deployment
+      run: |
+        echo "Verificando si la aplicación está corriendo..."
+        ssh -i ${{ secrets.EC2_SSH_KEY }} -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.HOST }} "pm2 list"
+
