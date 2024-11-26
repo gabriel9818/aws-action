@@ -24,3 +24,4 @@ jobs:
           git pull origin main                    # Obtén los últimos cambios
           npm install                             # Instala las dependencias
           echo "Conectándose a la instancia de EC2..."
+          echo "Conectándose a la instancia de EC2..."
